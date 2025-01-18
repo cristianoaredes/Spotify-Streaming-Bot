@@ -15,10 +15,13 @@ from colorama import Fore
 from pystyle import Center, Colors, Colorate
 import time
 
+# Set the title of the console window
 os.system(f"title Kichi779 - Spotify Streaming bot v1 ")
 
+# URL of the GitHub repository
 url = "https://github.com/Kichi779/Spotify-Streaming-Bot/"
 
+# Function to check for updates by comparing local and remote version files
 def check_for_updates():
     try:
         r = requests.get("https://raw.githubusercontent.com/Kichi779/Spotify-Streaming-Bot/main/version.txt")
@@ -33,6 +36,7 @@ def check_for_updates():
     except:
         return True
 
+# Function to print announcements from the GitHub repository
 def print_announcement():
     try:
         r = requests.get("https://raw.githubusercontent.com/Kichi779/Spotify-Streaming-Bot/main/announcement.txt", headers={"Cache-Control": "no-cache"})
@@ -41,12 +45,15 @@ def print_announcement():
     except:
         print("Could not retrieve announcement from GitHub.\n")
 
+# List of supported timezones
 supported_timezones = pytz.all_timezones
 
+# Function to set a random timezone for the browser session
 def set_random_timezone(driver):
     random_timezone = random.choice(supported_timezones)
     driver.execute_cdp_cmd("Emulation.setTimezoneOverride", {"timezoneId": random_timezone})
 
+# Function to set a fake geolocation for the browser session
 def set_fake_geolocation(driver, latitude, longitude):
     params = {
         "latitude": latitude,
@@ -55,6 +62,7 @@ def set_fake_geolocation(driver, latitude, longitude):
     }
     driver.execute_cdp_cmd("Emulation.setGeolocationOverride", params)
 
+# Main function to run the Spotify streaming bot
 def main():
     if not check_for_updates():
         return
@@ -78,6 +86,7 @@ def main():
     print(Colors.yellow, Center.XCenter(f"{announcement}"))
     print("")
 
+    # List of user agents to mimic different browsers
     user_agents = [
     # Chrome (Windows)
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36",
@@ -110,7 +119,7 @@ def main():
     "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36 OPR/80.0.4170.61"
     ]
     
-    #FAKE Language
+    # List of supported languages to mimic different locales
     supported_languages = [
     "en-US", "en-GB", "en-CA", "en-AU", "en-NZ", "fr-FR", "fr-CA", "fr-BE", "fr-CH", "fr-LU",
     "de-DE", "de-AT", "de-CH", "de-LU", "es-ES", "es-MX", "es-AR", "es-CL", "es-CO", "es-PE",
@@ -118,16 +127,20 @@ def main():
     "sv-SE", "da-DK", "no-NO"
     ]
 
+    # Paths to Chrome and ChromeDriver
     chrome_path = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
     driver_path = 'chromedriver.exe'
 
+    # Select a random user agent
     random_user_agent = random.choice(user_agents)
 
+    # Read accounts from the accounts.txt file
     with open('accounts.txt', 'r') as file:
         accounts = file.readlines()
 
     proxies = []
 
+    # Ask the user if they want to use proxies
     use_proxy = input(Colorate.Vertical(Colors.green_to_blue, "Do you want to use proxies? (y/n):"))
 
     if use_proxy.lower() == 'y':
@@ -136,17 +149,22 @@ def main():
             proxies = file.readlines()
         time.sleep(3)
 
+    # Ask the user for the Spotify song URL
     spotify_song = input(Colorate.Vertical(Colors.green_to_blue, "Enter the Spotify song URL (e.g https://open.spotify.com/track/5hFkGfx038V0LhqI0Uff2J?si=bf290dcc9a994c36):"))
 
     drivers = []
 
+    # Random delays to mimic human behavior
     delay = random.uniform(2, 6)
     delay2 = random.uniform(5, 14)
 
+    # Loop through each account and start the streaming process
     for account in accounts:
 
+        # Select a random language
         random_language = random.choice(supported_languages)
 
+        # Set Chrome options
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_experimental_option('excludeSwitches', ["enable-automation", 'enable-logging'])
         chrome_options.add_argument('--disable-logging')
@@ -164,32 +182,40 @@ def main():
             'profile.default_content_setting_values.notifications': 2
         })
 
+        # Initialize the Chrome driver
         driver = webdriver.Chrome(service=Service(driver_path), options=chrome_options)
 
+        # Split the account into username and password
         username, password = account.strip().split(':')
 
         try:
+            # Open the Spotify login page
             driver.get("https://www.spotify.com/us/login/")
 
+            # Find and fill the username and password fields
             username_input = driver.find_element(By.CSS_SELECTOR, "input#login-username")
             password_input = driver.find_element(By.CSS_SELECTOR, "input#login-password")
 
             username_input.send_keys(username)
             password_input.send_keys(password)
 
+            # Click the login button
             driver.find_element(By.CSS_SELECTOR, "button[data-testid='login-button']").click()
 
             time.sleep(delay)
 
+            # Open the specified Spotify song
             driver.get(spotify_song)
 
             driver.maximize_window()
 
+            # Press the escape key to close any pop-ups
             keyboard.press_and_release('esc')
 
             time.sleep(10)
 
             try:
+                # Accept cookies if the prompt appears
                 cookie = driver.find_element(By.XPATH, "//button[text()='Accept Cookies']")
                 cookie.click()
             except NoSuchElementException:
@@ -199,6 +225,7 @@ def main():
                 except NoSuchElementException:
                     time.sleep(delay2)
 
+            # Find and click the play button
             playmusic_xpath = "(//button[@data-testid='play-button']//span)[3]"
             playmusic = driver.find_element(By.XPATH, playmusic_xpath)
             playmusic.click()
@@ -210,9 +237,10 @@ def main():
         except Exception as e:
             print(Colors.red, "An error occurred in the bot system:", str(e))
 
+        # Set a random timezone for the browser session
         set_random_timezone(driver)
         
-        # FAKE LOCATION
+        # Set a fake geolocation for the browser session
         latitude = random.uniform(-90, 90)
         longitude = random.uniform(-180, 180)
         set_fake_geolocation(driver, latitude, longitude)
